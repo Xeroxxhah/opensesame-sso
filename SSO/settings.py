@@ -16,7 +16,7 @@ ENCRYPTION_KEY = 'replace-me-by-a-very-secure-encrytion-key'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.18.14', '127.0.0.1']
+ALLOWED_HOSTS = ['127.0.0.1']
 
 
 # Application definition
