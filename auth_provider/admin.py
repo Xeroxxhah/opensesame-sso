@@ -1,14 +1,30 @@
 # admin.py
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 from django.utils.html import format_html
 from .models import CustomUserModel, ServiceProvider, ServiceProviderUser
 
 @admin.register(CustomUserModel)
-class CustomUserModelAdmin(admin.ModelAdmin):
+class CustomUserModelAdmin(UserAdmin):
     list_display = ['email', 'username', 'is_verified', 'is_active']
     list_filter = ['is_verified', 'is_active', 'role']
     search_fields = ['email', 'username']
     readonly_fields = ['user_id']
+
+    fieldsets = (
+        (None, {'fields': ('email', 'username', 'password')}),
+        ('Personal info', {'fields': ('first_name', 'last_name', 'phone_number', 'date_of_birth', 'profile_picture', 'address', 'bio')}),
+        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'is_verified', 'role', 'is_mfa_enabled', 'groups', 'user_permissions')}),
+        ('Important dates', {'fields': ('last_login', 'date_joined')}),
+        ('System', {'fields': ('user_id',)}),
+    )
+
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('email', 'username', 'password1', 'password2'),
+        }),
+    )
 
 @admin.register(ServiceProvider)
 class ServiceProviderAdmin(admin.ModelAdmin):
