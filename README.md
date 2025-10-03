@@ -67,7 +67,7 @@
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/Xeroxxhah/opensesame.git
+   git clone [https://github.com/Xeroxxhah/opensesame.git](https://github.com/Xeroxxhah/opensesame-sso.git)
    cd opensesame
    ```
 
