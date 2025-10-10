@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your OTP Code</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f7;">
+  
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f7; padding: 40px 0;">
+    <tr>
+      <td align="center">
+        
+        <!-- Main Container -->
+        <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden; max-width: 100%;">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;">
+              <div style="width: 60px; height: 60px; background-color: rgba(255, 255, 255, 0.2); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 15V17M6 21H18C19.1046 21 20 20.1046 20 19V13C20 11.8954 19.1046 11 18 11H6C4.89543 11 4 11.8954 4 13V19C4 20.1046 4.89543 21 6 21Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M16 11V7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7V11" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600; letter-spacing: -0.5px;">Verification Code</h1>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              
+              <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">
+                Hello <strong>{{ user.username }}</strong>,
+              </p>
+              
+              <p style="margin: 0 0 30px; color: #666666; font-size: 15px; line-height: 1.6;">
+                You requested a one-time password to verify your identity. Use the code below to complete your sign-in:
+              </p>
+              
+              <!-- OTP Box -->
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0 0 30px;">
+                <tr>
+                  <td align="center" style="padding: 30px; background: linear-gradient(135deg, #f5f7fa 0%, #e9ecf2 100%); border-radius: 8px; border: 2px dashed #667eea;">
+                    <div style="font-size: 42px; font-weight: 700; color: #667eea; letter-spacing: 8px; font-family: 'Courier New', monospace;">
+                      {{ otp_code }}
+                    </div>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin: 0 0 20px; color: #666666; font-size: 15px; line-height: 1.6;">
+                This code will expire in <strong style="color: #333333;">{{ expiry_minutes }} minutes</strong>. Do not share this code with anyone.
+              </p>
+              
+              <p style="margin: 0 0 30px; color: #666666; font-size: 15px; line-height: 1.6;">
+                If you didn't request this code, please ignore this email or contact our support team if you have concerns.
+              </p>
+              
+              <!-- Security Notice -->
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #fff9e6; border-left: 4px solid #ffc107; border-radius: 4px; padding: 15px; margin: 0 0 20px;">
+                <tr>
+                  <td>
+                    <p style="margin: 0; color: #856404; font-size: 14px; line-height: 1.5;">
+                      <strong>Security Tip:</strong> We will never ask you for your verification code via email or phone. Keep it confidential.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin: 0; color: #666666; font-size: 15px; line-height: 1.6;">
+                Best regards,<br>
+                <strong style="color: #333333;">The OPENSESAME Team</strong>
+              </p>
+              
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef;">
+              
+              <p style="margin: 0 0 10px; color: #999999; font-size: 13px; line-height: 1.5;">
+                This is an automated message, please do not reply to this email.
+              </p>
+              
+              <p style="margin: 0 0 15px; color: #999999; font-size: 13px; line-height: 1.5;">
+                © 2025 {{ company_name }}. All rights reserved.
+              </p>
+              
+              <div style="margin-top: 15px;">
+                <a href="{{ website_url }}" style="color: #667eea; text-decoration: none; font-size: 13px; margin: 0 10px;">Visit Website</a>
+                <span style="color: #cccccc;">|</span>
+                <a href="{{ support_url }}" style="color: #667eea; text-decoration: none; font-size: 13px; margin: 0 10px;">Support</a>
+                <span style="color: #cccccc;">|</span>
+                <a href="{{ privacy_url }}" style="color: #667eea; text-decoration: none; font-size: 13px; margin: 0 10px;">Privacy Policy</a>
+              </div>
+              
+            </td>
+          </tr>
+          
+        </table>
+        
+      </td>
+    </tr>
+  </table>
+  
+</body>
+</html>

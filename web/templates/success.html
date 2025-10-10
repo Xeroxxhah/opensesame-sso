@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Success - OPENSESAME</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      animation: rotate 20s linear infinite;
+    }
+
+    body::after {
+      content: '';
+      position: absolute;
+      bottom: -50%;
+      left: -50%;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+      animation: rotate 25s linear infinite reverse;
+    }
+
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes scaleIn {
+      from {
+        opacity: 0;
+        transform: scale(0.5);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes drawCheck {
+      0% {
+        stroke-dashoffset: 100;
+      }
+      100% {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    @keyframes drawCircle {
+      0% {
+        stroke-dashoffset: 166;
+      }
+      100% {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .fade-in {
+      animation: slideUp 0.6s ease-out;
+    }
+
+    .scale-in {
+      animation: scaleIn 0.5s ease-out;
+    }
+
+    .success-circle {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 2rem;
+      position: relative;
+    }
+
+    .success-circle svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .circle-bg {
+      stroke: #e5e7eb;
+      fill: none;
+      stroke-width: 3;
+    }
+
+    .circle-progress {
+      stroke: #10b981;
+      fill: none;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-dasharray: 166;
+      stroke-dashoffset: 166;
+      animation: drawCircle 0.6s ease-out forwards;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+
+    .checkmark {
+      stroke: #10b981;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      stroke-dasharray: 48;
+      stroke-dashoffset: 48;
+      animation: drawCheck 0.4s ease-out 0.6s forwards;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: white;
+      border: 2px solid #e5e7eb;
+      transition: all 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+      border-color: #667eea;
+      color: #667eea;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
+    }
+
+    .info-box {
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      border: 2px solid #bbf7d0;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+  <div class="card relative z-10 w-full max-w-lg rounded-2xl p-8 md:p-12 fade-in">
+
+    <!-- Success Icon -->
+    <div class="success-circle scale-in">
+      <svg viewBox="0 0 60 60">
+        <!-- Background Circle -->
+        <circle cx="30" cy="30" r="26" class="circle-bg"/>
+        <!-- Animated Circle -->
+        <circle cx="30" cy="30" r="26" class="circle-progress"/>
+        <!-- Checkmark -->
+        <path d="M16 30 L26 40 L44 20" class="checkmark"/>
+      </svg>
+    </div>
+
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 mb-3">{{ title|default:"Success!" }}</h1>
+      <p class="text-lg text-gray-600">{{ message|default:"Your action was completed successfully." }}</p>
+    </div>
+
+    {% if details %}
+    <!-- Details Box -->
+    <div class="info-box rounded-xl p-6 mb-6">
+      <h3 class="text-sm font-semibold text-green-900 mb-3">Details:</h3>
+      {% if details is string %}
+        <p class="text-sm text-green-800">{{ details }}</p>
+      {% else %}
+        <ul class="space-y-2">
+          {% for detail in details %}
+            <li class="flex items-start gap-2 text-sm text-green-800">
+              <svg class="w-5 h-5 flex-shrink-0 text-green-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+              <span>{{ detail }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if next_steps %}
+    <!-- Next Steps -->
+    <div class="mb-8">
+      <h3 class="text-sm font-semibold text-gray-700 mb-4 text-center">What's Next?</h3>
+      <div class="space-y-3">
+        {% for step in next_steps %}
+          <div class="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
+            <div class="flex-shrink-0 w-6 h-6 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-sm font-semibold">
+              {{ forloop.counter }}
+            </div>
+            <p class="text-sm text-gray-700 pt-0.5">{{ step }}</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Actions -->
+    <div class="space-y-3">
+      {% if redirect_url %}
+        <a href="{{ redirect_url }}" class="btn-primary block w-full text-white text-center font-semibold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2">
+          {{ redirect_text|default:"Continue" }}
+        </a>
+      {% endif %}
+
+      {% if secondary_url %}
+        <a href="{{ secondary_url }}" class="btn-secondary block w-full text-gray-700 text-center font-semibold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2">
+          {{ secondary_text|default:"Go Back" }}
+        </a>
+      {% else %}
+        <a href="/" class="btn-secondary block w-full text-gray-700 text-center font-semibold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2">
+          Return to Home
+        </a>
+      {% endif %}
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-8">
+      <div class="divider mb-4"></div>
+      <p class="text-center text-sm text-gray-500">OPENSESAME SSO</p>
+    </div>
+  </div>
+
+  {% if auto_redirect and redirect_url %}
+  <script>
+    // Auto redirect after 5 seconds
+    let countdown = 5;
+    const redirectUrl = "{{ redirect_url }}";
+    const countdownInterval = setInterval(() => {
+      countdown--;
+      if (countdown <= 0) {
+        clearInterval(countdownInterval);
+        window.location.href = redirectUrl;
+      }
+    }, 1000);
+  </script>
+  {% endif %}
+
+</body>
+</html>

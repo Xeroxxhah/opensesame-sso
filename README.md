@@ -7,11 +7,20 @@
 ![License](https://img.shields.io/badge/license-GPL%20v3-blue.svg)
 ![Security](https://img.shields.io/badge/security-enterprise--grade-red.svg)
 
+## 🎯 What's New
+
+- ✨ **Passwordless Authentication (PLA)**: Login with just your email - no password needed!
+- 📧 **Email Verification Codes**: Secure 6-digit one-time codes delivered via email
+- 🎨 **Beautiful UI Templates**: Modern, animated login pages with smooth transitions
+- 🛠️ **Management Commands**: Quick setup with CLI tools for service providers
+- 📱 **Dual Authentication**: Choose between password-based or passwordless login
+
 ## ✨ Features
 
 ### 🛡️ **Security First**
 - **Individual Service Secrets**: Each service provider gets a unique, encrypted secret key for JWT validation
 - **Multi-Factor Authentication (MFA)**: TOTP-based 2FA support
+- **Passwordless Authentication (PLA)**: Email-based one-time code authentication
 - **Google reCAPTCHA Integration**: Bot protection on all authentication endpoints
 - **Encrypted Secret Storage**: Service secrets encrypted at rest using AES encryption
 - **JWT Security**: Short-lived access tokens with secure refresh mechanisms
@@ -28,9 +37,12 @@
 
 ### 👤 **User Experience**
 - **Single Sign-On**: One login for all connected services
+- **Multiple Authentication Methods**: Choose between password-based or passwordless login
+- **Passwordless Login**: No password needed - just enter your email and verify with a code
 - **User Profile Management**: Comprehensive user profiles with customizable fields
 - **Email Verification**: Secure email verification workflow
 - **Password Reset**: Secure password recovery with email tokens
+- **Beautiful UI**: Modern, responsive templates with smooth animations
 - **Mobile Responsive**: Works seamlessly across all devices
 
 ## 🏗️ Architecture
@@ -51,8 +63,14 @@
                     │  🎯 JWT Generation        │
                     │  🤖 reCAPTCHA Protection  │
                     │  🔑 MFA Support           │
+                    │  📧 Passwordless Auth     │
                     │                           │
                     └───────────────────────────┘
+                                 │
+                    ┌────────────▼────────────┐
+                    │    Email Service        │
+                    │  (OTP Code Delivery)    │
+                    └─────────────────────────┘
 ```
 
 ## 🚀 Quick Start
@@ -100,6 +118,30 @@
    python manage.py runserver
    ```
 
+7. **Create a test service provider**
+   ```bash
+   python manage.py create_test_service
+   ```
+
+8. **Link user to service**
+   ```bash
+   python manage.py add_user_to_service --email your-email@example.com
+   ```
+
+## 🛠️ Management Commands
+
+### Create Test Service Provider
+```bash
+python manage.py create_test_service [--name "Service Name"] [--redirect-url "http://..."]
+```
+Creates a service provider for development/testing.
+
+### Add User to Service
+```bash
+python manage.py add_user_to_service --email user@example.com [--service-id uuid]
+```
+Links a user account to a service provider.
+
 ## ⚙️ Configuration
 
 ### Environment Variables
@@ -115,24 +157,36 @@ ALLOWED_HOSTS=yourdomain.com,localhost
 # Database
 DATABASE_URL=postgresql://user:password@localhost:5432/opensesame_db
 
-# Email Configuration
+# Email Configuration (Required for Passwordless Auth)
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USE_TLS=True
 EMAIL_HOST_USER=your-email@gmail.com
 EMAIL_HOST_PASSWORD=your-app-password
+DEFAULT_FROM_EMAIL=your-email@gmail.com
 
 # Google reCAPTCHA
-ENABLE_CAPTCHA = True
-RECAPTCHA_PUBLIC_KEY=your-recaptcha-site-key
-RECAPTCHA_PRIVATE_KEY=your-recaptcha-secret-key
+ENABLE_RECAPTCHA=True
+RECAPTCHA_SITE_KEY=your-recaptcha-site-key
+RECAPTCHA_SECRET_KEY=your-recaptcha-secret-key
 
 # JWT Settings
-ACCESS_JWT_TIMEOUT=1440
-REFRESH_JWT_TIMEOUT=2880
+ACCESS_JWT_TIMEOUT=1440  # minutes
+REFRESH_JWT_TIMEOUT=2880  # minutes
+
+# Passwordless Authentication (PLA)
+PLA_CODE_EXP=5  # Code expiration in minutes
+PLA_MAX_ATTEMPTS=3  # Maximum verification attempts
 
 # Encryption
 ENCRYPTION_KEY=your-32-byte-encryption-key
+
+# Company Info (for email templates)
+COMP_CONF = {
+    "name": "Your Company",
+    "website": "https://yourwebsite.com",
+    "linkedin": "https://linkedin.com/company/yourcompany"
+}
 
 ```
 
@@ -143,6 +197,40 @@ ENCRYPTION_KEY=your-32-byte-encryption-key
 3. Choose reCAPTCHA v2 "I'm not a robot"
 4. Add your domain
 5. Copy the Site Key and Secret Key to your `.env` file
+
+### Email Configuration for Passwordless Auth
+
+OpenSesame supports multiple email providers for sending verification codes:
+
+**Gmail**:
+```python
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'your-email@gmail.com'
+EMAIL_HOST_PASSWORD = 'your-app-password'  # Use App Password, not regular password
+```
+
+**Hostinger**:
+```python
+EMAIL_HOST = 'smtp.hostinger.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'noreply@yourdomain.com'
+EMAIL_HOST_PASSWORD = 'your-password'
+```
+
+**SendGrid**:
+```python
+EMAIL_HOST = 'smtp.sendgrid.net'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'apikey'
+EMAIL_HOST_PASSWORD = 'your-sendgrid-api-key'
+```
+
+**Custom Email Template**:
+Edit `auth_provider/templates/email/otp_email.html` to customize the verification email design.
 
 ## 🔧 Service Provider Integration
 
@@ -209,13 +297,28 @@ if __name__ == "__main__":
 
 ### 4. Authentication Flow
 
+#### Password-Based Authentication
 ```
-1. User visits your app → Redirect to OpenSesame
-2. User authenticates → OpenSesame validates (including CAPTCHA if needed)
-3. OpenSesame generates JWT with your service's secret
-4. User redirected back with JWT token
-5. Your app verifies JWT using your secret key
-6. Grant access to authenticated user
+1. User visits your app → Redirect to OpenSesame login page
+2. User enters email/password (+ MFA if enabled)
+3. OpenSesame validates credentials (including CAPTCHA if needed)
+4. OpenSesame generates JWT with your service's secret
+5. User redirected back with JWT token via POST
+6. Your app verifies JWT using your secret key
+7. Grant access to authenticated user
+```
+
+#### Passwordless Authentication (PLA)
+```
+1. User visits your app → Redirect to OpenSesame PLA login page
+2. User enters email address
+3. OpenSesame sends 6-digit code via email
+4. User enters verification code
+5. OpenSesame validates code
+6. OpenSesame generates JWT with your service's secret
+7. User redirected back with JWT token via POST
+8. Your app verifies JWT using your secret key
+9. Grant access to authenticated user
 ```
 
 ## 🔒 Security Features
@@ -234,6 +337,11 @@ if __name__ == "__main__":
 
 ### Authentication Security
 - **Multi-Factor Authentication**: TOTP-based 2FA support
+- **Passwordless Authentication**:
+  - Time-limited verification codes (5 minutes default)
+  - Maximum attempt limiting (3 attempts default)
+  - One-time use codes
+  - SHA-256 hashed code storage
 - **reCAPTCHA Integration**: Prevents automated attacks
 - **Rate Limiting**: Protection against brute force attempts
 - **Email Verification**: Ensures email ownership
@@ -243,35 +351,139 @@ if __name__ == "__main__":
 
 ### Authentication Endpoints
 
-#### Login
+#### Standard Login (Password-Based)
 ```http
 POST /api/v1/auth/
 Content-Type: application/json
 
 {
-  "email": "user@example.com",
+  "username": "user@example.com",
   "password": "securepassword",
-  "captcha_token": "recaptcha-response-token if enabled and set",
+  "mfa_token": "123456",  // Optional: Required if MFA is enabled
+  "g-recaptcha-response": "recaptcha-token",  // Optional: If reCAPTCHA is enabled
   "service_id": "uuid-of-requesting-service"
-  "mfa-code": "MFA code if it is enabled and set"
-
 }
+
+Response:
+Returns HTML page that auto-submits to service provider callback URL with JWT tokens
 ```
 
-#### Token Verification
+#### Check MFA Status
 ```http
-POST /api/v1/refresh-token/
-Authorization: Bearer your-jwt-token
+POST /api/v1/mfa-status/
+Content-Type: application/json
 
 {
-  "refresh_token": "refresh token",
+  "username": "user@example.com",
+  "password": "securepassword",
   "service_id": "uuid-of-requesting-service"
 }
+
+Response:
+{
+  "mfa_required": true/false
+}
 ```
+
+#### Passwordless Login - Send Code
+```http
+POST /api/v1/pla/send-code/
+Content-Type: application/json
+
+{
+  "username": "user@example.com",
+  "service_id": "uuid-of-requesting-service",
+  "g-recaptcha-response": "recaptcha-token"  // Optional: If reCAPTCHA is enabled
+}
+
+Response:
+{
+  "success": true,
+  "message": "Verification code sent to your email"
+}
+```
+
+#### Passwordless Login - Verify Code
+```http
+POST /api/v1/pla/auth/
+Content-Type: application/json
+
+{
+  "username": "user@example.com",
+  "code": "123456",
+  "service_id": "uuid-of-requesting-service"
+}
+
+Response:
+Returns HTML page that auto-submits to service provider callback URL with JWT tokens
+```
+
+#### Token Refresh
+```http
+POST /api/v1/refresh-token/
+Content-Type: application/json
+
+{
+  "refresh_token": "your-refresh-token",
+  "service_id": "uuid-of-requesting-service"
+}
+
+Response:
+{
+  "access": "new-access-token",
+  "refresh": "new-refresh-token"
+}
+```
+
+### Web Login Pages
+
+#### Standard Login Page
+```
+GET /web.sso/login/?service_id={your-service-id}
+```
+- Username/password authentication
+- Optional MFA support
+- Link to passwordless login
+- reCAPTCHA integration
+
+#### Passwordless Login Page
+```
+GET /web.sso/pla-login/?service_id={your-service-id}
+```
+- Email-based authentication
+- Two-step verification process
+- Code resend functionality
+- Link to password-based login
 
 ## 🧪 Testing
 
-Run the test suite:
+### Testing Passwordless Authentication
+
+1. **Start the test service provider**:
+   ```bash
+   python test_service_provider.py
+   ```
+   This starts a Flask app on port 5000 that receives SSO callbacks.
+
+2. **Get your service ID**:
+   ```bash
+   python manage.py create_test_service
+   ```
+   Note the Service ID from the output.
+
+3. **Link your user**:
+   ```bash
+   python manage.py add_user_to_service --email your-email@example.com
+   ```
+
+4. **Test the flow**:
+   - Visit: `http://127.0.0.1:8000/web.sso/pla-login/?service_id={YOUR-SERVICE-ID}`
+   - Enter your email
+   - Check your email for the 6-digit code
+   - Enter the code
+   - You'll be redirected to the Flask app with JWT tokens!
+
+### Run the test suite:
 
 ## 🚀 Deployment
 

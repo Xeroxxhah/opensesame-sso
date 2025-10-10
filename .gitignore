@@ -266,3 +266,5 @@ profile_pics/
 # Secret keys and sensitive files
 secret_key.txt
 secrets.json
+
+.claude/

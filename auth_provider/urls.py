@@ -20,7 +20,12 @@ from .views import *
 
 
 urlpatterns = [
-
+    # Standard authentication with password
     path('auth/', APILoginView.as_view(), name='api_login'),
-    path('mfa-status/',APIMfaStatusView.as_view(), name='api_mfa_status')
+    path('mfa-status/', APIMfaStatusView.as_view(), name='api_mfa_status'),
+    path('refresh-token/', APIRefreshTokenView.as_view(), name='api_refresh_token'),
+
+    # Passwordless authentication (PLA)
+    path('pla/send-code/', APIPLASendCodeView.as_view(), name='api_pla_send_code'),
+    path('pla/auth/', APIPLALoginView.as_view(), name='api_pla_login'),
 ]

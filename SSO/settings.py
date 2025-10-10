@@ -16,7 +16,7 @@ ENCRYPTION_KEY = 'replace-me-by-a-very-secure-encrytion-key'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 
 # Application definition
@@ -128,6 +128,14 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOW_METHODS = ['GET', 'POST', 'PUT', 'DELETE']
 
+# CSRF Trusted Origins
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+    'http://localhost',
+    'http://127.0.0.1',
+]
+
 
 ACCESS_JWT_TIMEOUT=1440
 REFRESH_JWT_TIMEOUT=2880
@@ -137,3 +145,26 @@ REFRESH_JWT_TIMEOUT=2880
 ENABLE_RECAPTCHA = False
 RECAPTCHA_SITE_KEY = 'YOUR_RECAPTCHA_SITE_KEY'
 RECAPTCHA_SECRET_KEY = 'YOUR_RECAPTCHA_SECRET_KEY'
+
+
+
+PLA_CODE_EXP = 5 # 5mins
+PLA_MAX_ATTEMPTS = 3
+
+# Email Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.hostinger.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'test@example.com'
+EMAIL_HOST_PASSWORD = 'my-secure-password'
+DEFAULT_FROM_EMAIL = 'test@example.com'
+
+
+
+# Company 
+COMP_CONF = {
+    "name": "Example",
+    "website": "https://example.com",
+    "linkedin": ""
+}

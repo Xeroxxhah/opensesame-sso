@@ -14,7 +14,7 @@ class CustomUserModelAdmin(UserAdmin):
     fieldsets = (
         (None, {'fields': ('email', 'username', 'password')}),
         ('Personal info', {'fields': ('first_name', 'last_name', 'phone_number', 'date_of_birth', 'profile_picture', 'address', 'bio')}),
-        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'is_verified', 'role', 'is_mfa_enabled', 'groups', 'user_permissions')}),
+        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'is_verified', 'role', 'is_mfa_enabled', 'is_pla_enabled', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
         ('System', {'fields': ('user_id',)}),
     )

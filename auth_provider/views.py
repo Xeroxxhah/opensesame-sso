@@ -8,7 +8,8 @@ from django.http import JsonResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from .custom_jwt_backend import CustomJWTBackend
-from .models import ServiceProvider, ServiceProviderUser
+from .pla import PasswordLessAuth
+from .models import ServiceProvider, ServiceProviderUser, PasswordLessAuthModel
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from django.shortcuts import redirect
@@ -351,7 +352,7 @@ class APILoginView(APIView):
 
             if settings.ENABLE_RECAPTCHA:
                 recaptcha_response = request.data.get('g-recaptcha-response')
-                print(recaptcha_response)
+
                 data = {
                     'secret': settings.RECAPTCHA_SECRET_KEY,
                     'response': recaptcha_response
@@ -359,15 +360,12 @@ class APILoginView(APIView):
                 r = requests.post('https://www.google.com/recaptcha/api/siteverify', data=data)
                 result = r.json()
 
-                print(result)
-
                 if not result.get('success'):
                     return Response({'error': 'Invalid Captcha,Try Again'}, status=401)
 
             if not service_id:
                 return Response({'error': 'Service ID not found or malformed'}, status=400)
 
-            # Convert service_id to string if it's a UUID
             try:
                 if isinstance(service_id, uuid.UUID):
                     service_id = str(service_id)
@@ -383,17 +381,15 @@ class APILoginView(APIView):
                 return Response({'error': 'Invalid credentials'}, status=401)
 
             if user.is_mfa_enabled:
-                print(1)
+
                 if not mfa_token:
-                    print(2)
+
                     return Response({'error': 'MFA token required'}, status=403)
                 
-                # FIXED: Call verify_mfa_status only ONCE
                 mfa_verification_result = verify_mfa_status(request, user, mfa_token)
-                print(f"MFA verification result: {mfa_verification_result}")
                 
                 if not mfa_verification_result:
-                    print(3)
+
                     return Response({'error': 'Invalid MFA token'}, status=403)
 
             if not ServiceProviderUser.objects.filter(
@@ -491,22 +487,17 @@ def verify_mfa_status(request, user, mfa_token):
     Verifies the MFA token using django-otp.
     Logs the user in if the token is valid.
     """
-    print(5)
+
     if not user.is_mfa_enabled:
-        print(6)
         return True  # MFA not required
 
     try:
-        print(8)
         device = TOTPDevice.objects.get(user=user)
-        print(device)
         
         # Store result in variable to avoid double verification
         is_valid = device.verify_token(mfa_token)
-        print(f'MFA verification result: {is_valid}')
         
         if is_valid:
-            print(9)
             login(request, user)
             return True
         else:
@@ -521,3 +512,174 @@ def verify_mfa_status(request, user, mfa_token):
 
 
 
+@method_decorator(csrf_exempt, name='dispatch')
+class APIPLASendCodeView(APIView):
+    """
+    Sends a passwordless authentication code to the user's email.
+    """
+    def post(self, request):
+        try:
+            username = request.data.get('username')
+            service_id = request.data.get('service_id')
+
+            if settings.ENABLE_RECAPTCHA:
+                recaptcha_response = request.data.get('g-recaptcha-response')
+
+                data = {
+                    'secret': settings.RECAPTCHA_SECRET_KEY,
+                    'response': recaptcha_response
+                }
+                r = requests.post('https://www.google.com/recaptcha/api/siteverify', data=data)
+                result = r.json()
+
+                if not result.get('success'):
+                    return Response({'error': 'Invalid Captcha, Try Again'}, status=401)
+
+            # Validate and get service provider
+            if service_id:
+                try:
+                    if isinstance(service_id, uuid.UUID):
+                        service_id = str(service_id)
+                    elif service_id:
+                        service_id = str(uuid.UUID(service_id))
+                except (ValueError, TypeError):
+                    return Response({'error': 'Invalid service ID format'}, status=400)
+
+                try:
+                    service = ServiceProvider.objects.get(service_id=service_id)
+                except ServiceProvider.DoesNotExist:
+                    return Response({
+                        'error': 'Service not found. Please contact your administrator.',
+                        'details': 'The service provider does not exist in the system.'
+                    }, status=404)
+            else:
+                # For development: Use first available service or allow without service check
+                service = ServiceProvider.objects.first()
+                if not service:
+                    return Response({
+                        'error': 'No service providers configured.',
+                        'details': 'Please create a service provider in the admin panel first.'
+                    }, status=400)
+            User = get_user_model()
+
+            user = get_object_or_404(User, email=username)
+
+            # Check if user is allowed to access this service
+            if not ServiceProviderUser.objects.filter(
+                user=user,
+                serviceprovider=service
+            ).exists():
+                return Response({'error': 'Not Allowed'}, status=403)
+
+            # Generate and send PLA code
+            pla = PasswordLessAuth()
+            code = pla.generate_pla_code(user)
+            pla.send_otp_email(user=user, otp_code=code.get('code'))
+
+            return Response({
+                'success': True,
+                'message': 'Verification code sent to your email'
+            }, status=200)
+
+        except Exception as e:
+            logger.error(f"PLA Send Code error: {str(e)}\n{traceback.format_exc()}")
+            error_message = str(e)
+            if service_id:
+                error_message = error_message.replace(str(service_id), str(service_id))
+            return Response({'error': f'An unexpected error occurred: {error_message}'}, status=500)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class APIPLALoginView(APIView):
+    """
+    Verifies the passwordless authentication code and logs the user in.
+    """
+    def post(self, request):
+        try:
+            username = request.data.get('username')
+            service_id = request.data.get('service_id')
+            code = request.data.get('code')
+
+            if settings.ENABLE_RECAPTCHA:
+                recaptcha_response = request.data.get('g-recaptcha-response')
+
+                data = {
+                    'secret': settings.RECAPTCHA_SECRET_KEY,
+                    'response': recaptcha_response
+                }
+                r = requests.post('https://www.google.com/recaptcha/api/siteverify', data=data)
+                result = r.json()
+
+                if not result.get('success'):
+                    return Response({'error': 'Invalid Captcha, Try Again'}, status=401)
+
+            # Validate and get service provider
+            if service_id:
+                try:
+                    if isinstance(service_id, uuid.UUID):
+                        service_id = str(service_id)
+                    elif service_id:
+                        service_id = str(uuid.UUID(service_id))
+                except (ValueError, TypeError):
+                    return Response({'error': 'Invalid service ID format'}, status=400)
+
+                try:
+                    service = ServiceProvider.objects.get(service_id=service_id)
+                except ServiceProvider.DoesNotExist:
+                    return Response({
+                        'error': 'Service not found. Please contact your administrator.',
+                        'details': 'The service provider does not exist in the system.'
+                    }, status=404)
+            else:
+                # For development: Use first available service or allow without service check
+                service = ServiceProvider.objects.first()
+                if not service:
+                    return Response({
+                        'error': 'No service providers configured.',
+                        'details': 'Please create a service provider in the admin panel first.'
+                    }, status=400)
+
+            pla = PasswordLessAuth()
+            User = get_user_model()
+
+            user = get_object_or_404(User, email=username)
+
+            if not code:
+                return Response({'error': 'Code is required'}, status=400)
+
+            if not pla.pla_authenticate(user=user, code=code):
+                return Response({'error': 'Wrong code'}, status=401)
+
+            if not ServiceProviderUser.objects.filter(
+                user=user,
+                serviceprovider=service
+            ).exists():
+                return Response({'error': 'Not Allowed'}, status=403)
+
+            backend = CustomJWTBackend()
+            access_token, refresh_token = backend.get_token_pair(user=user, service_id=service_id)
+
+            redirect_url = service.redirect_url
+
+            #return redirect
+
+            token_payload = {
+                'access': str(access_token),
+                'refresh': str(refresh_token),
+            }
+
+            json_payload = json.dumps(token_payload).replace('"', '&quot;')
+
+
+            return HttpResponse(html_template.format(
+            service_url=redirect_url,
+            json_payload=json_payload),
+            content_type='text/html')
+
+        except Exception as e:
+            logger.error(f"Login error: {str(e)}\n{traceback.format_exc()}")
+            # Ensure error message is JSON-serializable
+            error_message = str(e)
+            if service_id:
+                error_message = error_message.replace(str(service_id), str(service_id))
+            return Response({'error': f'An unexpected error occurred: {error_message}'}, status=500)
