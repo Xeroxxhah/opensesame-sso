@@ -4,6 +4,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from rest_framework.permissions import IsAuthenticated
 from django.http import JsonResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -22,6 +24,15 @@ import traceback
 import json
 
 logger = logging.getLogger(__name__)
+
+
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    """
+    SessionAuthentication without CSRF enforcement for specific endpoints.
+    Use only for trusted internal endpoints.
+    """
+    def enforce_csrf(self, request):
+        return  # Do not enforce CSRF
 
 html_template = """<!DOCTYPE html>
 <html lang="en">
@@ -683,3 +694,53 @@ class APIPLALoginView(APIView):
             if service_id:
                 error_message = error_message.replace(str(service_id), str(service_id))
             return Response({'error': f'An unexpected error occurred: {error_message}'}, status=500)
+
+
+
+
+
+class MachineApiTokenView(APIView):
+    """
+    Generates long-lived API tokens for machine-to-machine authentication.
+    Requires superuser privileges.
+    """
+    authentication_classes = [CsrfExemptSessionAuthentication, BasicAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            user = request.user
+
+            # Check if user is authenticated (should be handled by permission_classes, but double check)
+            if not user.is_authenticated:
+                return Response({'error': 'Authentication required.'}, status=401)
+
+            # Check if user is superuser
+            if not user.is_superuser:
+                return Response({'error': 'You are not allowed to create API token. Superuser access required.'}, status=403)
+
+            service_id = request.data.get('service_id')
+
+            if not service_id:
+                return Response({'error': 'Service ID is required.'}, status=400)
+
+            # Validate service exists
+            try:
+                service = ServiceProvider.objects.get(service_id=service_id)
+            except ServiceProvider.DoesNotExist:
+                return Response({'error': 'Service provider not found.'}, status=404)
+
+            # Generate tokens
+            tokenbe = CustomJWTBackend()
+            access, refresh = tokenbe.get_token_pair(user, service_id, for_machine_use=True)
+
+            return Response({
+                'tokens': {
+                    'access': access,
+                    'refresh': refresh
+                }
+            }, status=200)
+
+        except Exception as e:
+            logger.error(f"Machine token generation error: {str(e)}\n{traceback.format_exc()}")
+            return Response({'error': 'An unexpected error occurred while generating tokens.'}, status=500)

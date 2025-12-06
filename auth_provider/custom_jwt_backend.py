@@ -53,7 +53,7 @@ class CustomJWTBackend:
         return requested_claims
 
 
-    def get_token_pair(self, user, service_id=None, custom_claims=None):
+    def get_token_pair(self, user, service_id=None, custom_claims=None, for_machine_use=False):
         now = datetime.utcnow()
 
         if not service_id:
@@ -79,18 +79,28 @@ class CustomJWTBackend:
             'exp': now + timedelta(minutes=settings.ACCESS_JWT_TIMEOUT or 1440)
         })
 
+        
+        
+        if for_machine_use:
+            exp_access = now + timedelta(minutes=settings.API_ACCESS_JWT_TIMEOUT or 262800)
+            exp_refresh = now + timedelta(minutes=settings.API_REFRESH_JWT_TIMEOUT or 306600)
+        else:
+            exp_access = now + timedelta(minutes=settings.ACCESS_JWT_TIMEOUT or 1440)
+            exp_refresh = now + timedelta(minutes=settings.REFRESH_JWT_TIMEOUT or 2880)
+
+
         access_payload = base_payload.copy()
         access_payload.update({
             'token_type': ACCESS_TOKEN, 
             'service_id': str(service_id), 
-            'exp': now + timedelta(minutes=settings.ACCESS_JWT_TIMEOUT or 1440)
+            'exp': exp_access
         })
         
         refresh_payload = base_payload.copy()
         refresh_payload.update({
             'token_type': REFRESH_TOKEN, 
             'service_id': str(service_id), 
-            'exp': now + timedelta(minutes=settings.REFRESH_JWT_TIMEOUT or 2880)
+            'exp': exp_refresh
         })
         
         access_payload = self._serialize_payload(access_payload)

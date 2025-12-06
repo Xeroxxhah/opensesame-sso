@@ -23,6 +23,7 @@ class CustomUserModel(AbstractUser):
     is_pla_enabled = models.BooleanField(default=False)
     address = models.CharField(max_length=200, blank=True, null=True)
     bio = models.CharField(max_length=200, blank=True, null=True)
+    #is_machine_user = models.BooleanField(default=False)
     
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']

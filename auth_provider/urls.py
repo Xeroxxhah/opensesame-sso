@@ -28,4 +28,7 @@ urlpatterns = [
     # Passwordless authentication (PLA)
     path('pla/send-code/', APIPLASendCodeView.as_view(), name='api_pla_send_code'),
     path('pla/auth/', APIPLALoginView.as_view(), name='api_pla_login'),
+
+    # Machine/API authentication
+    path('machine-token/', MachineApiTokenView.as_view(), name='api_machine_token'),
 ]
