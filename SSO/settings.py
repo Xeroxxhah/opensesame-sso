@@ -136,6 +136,17 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1',
 ]
 
+# Session Configuration
+SESSION_COOKIE_AGE = 1209600  # 2 weeks in seconds
+SESSION_SAVE_EVERY_REQUEST = True  # Update session on every request to keep it alive
+SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to session cookie
+SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Keep session even after browser closes
+
+# Login URL
+LOGIN_URL = '/web.sso/user-login/'
+LOGIN_REDIRECT_URL = '/web.sso/user-dashboard/'
+
 
 ACCESS_JWT_TIMEOUT=1440
 REFRESH_JWT_TIMEOUT=2880

@@ -333,16 +333,17 @@ def web_login_v1(request):
 def user_dashboard(request):
     user_services = ServiceProviderUser.objects.filter(user=request.user)
 
-    service_ids = []
+    services = []
 
     for service in user_services:
-        service_ids.append(service.serviceprovider.service_id)
+        services.append({'service_id':service.serviceprovider.service_id, 'service_name':service.serviceprovider.service_name})
     
-    return render(request, 'user_dashboard.html', {'services':service_ids})
+    return render(request, 'user_dashboard.html', {'services':services})
 
 
 @login_required
 def redirect_to_service(request, service_id):
+    
     service = ServiceProvider.objects.get(service_id=service_id)
 
     if not ServiceProviderUser.objects.filter(user=request.user,serviceprovider=service).exists():
