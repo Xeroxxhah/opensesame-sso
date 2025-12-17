@@ -7,11 +7,15 @@ from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from auth_provider.models import ServiceProviderUser, ServiceProvider
 from rest_framework.response import Response
 from auth_provider.custom_jwt_backend import CustomJWTBackend
 from django.http import HttpResponse
 import json
+from django.shortcuts import get_object_or_404
+
+
 
 html_template = """<!DOCTYPE html>
 <html lang="en">
@@ -321,13 +325,14 @@ def web_login_v1(request):
             login(request,user)
             return redirect('user_dashboard')
 
-        return Response({'error': 'Not Allowed'}, status=401)
-
+        # Add error message and re-render the login page
+        messages.error(request, 'Invalid username or password. Please try again.')
+        return render(request, 'web-login.html')
 
     elif request.method == 'GET':
         return render(request, 'web-login.html')
     else:
-        return Response({'error': 'Method Not Allowed'}, status=405)
+        return HttpResponse('Method Not Allowed', status=405)
 
 @login_required
 def user_dashboard(request):
@@ -343,12 +348,12 @@ def user_dashboard(request):
 
 @login_required
 def redirect_to_service(request, service_id):
-    
+
     service = ServiceProvider.objects.get(service_id=service_id)
 
     if not ServiceProviderUser.objects.filter(user=request.user,serviceprovider=service).exists():
         return Response({'error': 'Not Allowed'}, status=403)
-    
+
     backend = CustomJWTBackend()
     access_token, refresh_token = backend.get_token_pair(user=request.user, service_id=service_id)
 
@@ -361,7 +366,47 @@ def redirect_to_service(request, service_id):
 
     json_payload = json.dumps(token_payload).replace('"', '&quot;')
 
-    return HttpResponse(html_template.format(service_url=redirect_url,json_payload=json_payload),content_type='text/html')
+    # Access session data to ensure session is active and will be saved
+    # This forces Django to send the session cookie in the response
+    _ = request.session.get('_auth_user_id')
+    request.session.modified = True
+
+    response = HttpResponse(html_template.format(service_url=redirect_url,json_payload=json_payload),content_type='text/html')
+
+    return response
+
+
+@login_required
+def r2sa(request, service_id):
+    
+    service = get_object_or_404(ServiceProvider,service_id=service_id)
+
+    if not ServiceProviderUser.objects.filter(user=request.user,serviceprovider=service).exists():
+        return Response({'error': 'Not Allowed'}, status=403)
+    
+    if request.method == 'GET':
+        return render(request, 'r2sa.html', {'service_id': service.service_id, 'service_name':service.service_name})
+    elif request.method == 'POST':
+
+        jwt_backend = CustomJWTBackend()
+        access_token, refresh_token = jwt_backend.get_token_pair(user=request.user, service_id=service_id)
+
+        redirect_url = service.redirect_url
+
+        token_payload = {
+        'access': str(access_token),
+        'refresh': str(refresh_token),
+        }
+
+        json_payload = json.dumps(token_payload).replace('"', '&quot;')
+
+        _ = request.session.get('_auth_user_id')
+        request.session.modified = True
+
+        response = HttpResponse(html_template.format(service_url=redirect_url,json_payload=json_payload),content_type='text/html')
+
+        return response
+
 
 
 

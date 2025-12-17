@@ -107,7 +107,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Karachi'
 
 USE_I18N = True
 
@@ -140,8 +140,10 @@ CSRF_TRUSTED_ORIGINS = [
 SESSION_COOKIE_AGE = 1209600  # 2 weeks in seconds
 SESSION_SAVE_EVERY_REQUEST = True  # Update session on every request to keep it alive
 SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to session cookie
-SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
+SESSION_COOKIE_SAMESITE = None  # Allow cookies in cross-site contexts (new tabs)
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Keep session even after browser closes
+SESSION_COOKIE_SECURE = False  # Must be False for SameSite=None without HTTPS in dev
+SESSION_COOKIE_NAME = 'opensesame_sessionid'  # Custom session cookie name
 
 # Login URL
 LOGIN_URL = '/web.sso/user-login/'

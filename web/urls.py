@@ -11,6 +11,7 @@ urlpatterns = [
 
     # Service redirect
     path('redirect-to-service/<uuid:service_id>/', redirect_to_service, name='redirect_to_service'),
+    path('authorize/<uuid:service_id>/', r2sa, name='r2sa'),
 
     # Passwordless login
     path('pla-login/', web_pla_login, name='web_pla_login'),
