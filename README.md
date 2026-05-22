@@ -538,7 +538,7 @@ For commercial use without GPL restrictions, commercial licenses are available. 
 - **Documentation**: [Full Documentation](https://opensesame-sso.readthedocs.io/)
 - **Issues**: [GitHub Issues](https://github.com/Xeroxxhah/opensesame/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/Xeroxxhah/opensesame/discussions)
-- **Security**: Report security issues to security@yourdomain.com
+- **Security**: Report security issues to xeroxxhah@pm.me
 
 ## 🙏 Acknowledgments
 
