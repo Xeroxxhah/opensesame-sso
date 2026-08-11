@@ -22,10 +22,10 @@
 - **Multi-Factor Authentication (MFA)**: TOTP-based 2FA support
 - **Passwordless Authentication (PLA)**: Email-based one-time code authentication
 - **Google reCAPTCHA Integration**: Bot protection on all authentication endpoints
+- **CriminalIP Integration**: IP reputation and risk scoring at login, with high-risk sessions flagged for step-up authentication
 - **Encrypted Secret Storage**: Service secrets encrypted at rest using AES encryption
 - **JWT Security**: Short-lived access tokens with secure refresh mechanisms
 - **Rate Limiting**: Protection against brute force attacks
-- **CSRF Protection**: Built-in Django CSRF protection for all forms
 
 ### 🚀 **Enterprise Ready**
 - **Multi-Service Support**: Unlimited service provider registrations

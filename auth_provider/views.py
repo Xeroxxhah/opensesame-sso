@@ -26,6 +26,15 @@ import json
 logger = logging.getLogger(__name__)
 
 
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0].strip()
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
 class CsrfExemptSessionAuthentication(SessionAuthentication):
     """
     SessionAuthentication without CSRF enforcement for specific endpoints.
@@ -373,6 +382,33 @@ class APILoginView(APIView):
 
                 if not result.get('success'):
                     return Response({'error': 'Invalid Captcha,Try Again'}, status=401)
+
+                
+            if settings.ENABLE_IPCRIMINAL:
+                from criminalip.criminalip import CriminalIP
+                from criminalip.exceptions import ApiKeyError
+
+                if not settings.IPCRIMINAL_API_TOKEN:
+                    raise ApiKeyError('No Api Key Provided') 
+
+                client = CriminalIP(api_token=settings.IPCRIMINAL_API_TOKEN)
+
+                user_ip_addr = get_client_ip(request)
+
+                user_ip_data = client.ip_mal_info(ip_address=str(user_ip_addr))
+                
+                _score = 0
+
+                if bool(user_ip_data.get("is_malicious")):
+                    _score += 50
+                if bool(user_ip_data.get("is_actor")):
+                    _score += 10
+                if int(user_ip_data.get("vulnerability")['count']) > 0:
+                    _score += 30
+
+                if min(_score, 100) >= 50:
+                    return Response({'error': 'Security check failed, Try again later!!!'}, status=403)
+
 
             if not service_id:
                 return Response({'error': 'Service ID not found or malformed'}, status=400)
